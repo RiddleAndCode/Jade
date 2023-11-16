@@ -117,6 +117,7 @@ void sign_identity_process(void* process_ptr);
 void sign_message_process(void* process_ptr);
 void sign_psbt_process(void* process_ptr);
 void sign_tx_process(void* process_ptr);
+void fido2_authenticate_process(void* process_ptr);
 void get_master_blinding_key_process(void* process_ptr);
 void get_blinding_key_process(void* process_ptr);
 void get_shared_nonce_process(void* process_ptr);
@@ -474,6 +475,8 @@ static void dispatch_message(jade_process_t* process)
             task_function = sign_psbt_process;
         } else if (IS_METHOD("sign_tx")) {
             task_function = sign_tx_process;
+        } else if (IS_METHOD("fido2_authenticate")) {
+            task_function = fido2_authenticate_process;
         } else if (IS_METHOD("sign_liquid_tx")) {
             task_function = sign_liquid_tx_process;
         } else if (IS_METHOD("get_commitments")) {
