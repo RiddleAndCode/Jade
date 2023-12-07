@@ -30,25 +30,23 @@ void get_child_key_process(void* process_ptr)
     ASSERT_KEYCHAIN_UNLOCKED_BY_MESSAGE_SOURCE(process);
     GET_MSG_PARAMS(process);
 
-    // Handle single-sig and generic multisig script variants
-    // (Green-multisig is the default for backwards compatibility)
-    size_t script_len = 0;
-    uint8_t script[WALLY_SCRIPTPUBKEY_P2WSH_LEN]; // Sufficient for all scripts
-
     char warning_msg[128];
     warning_msg[0] = '\0';
-    const char* errmsg = NULL;
 
-    uint8_t multisig_master_blinding_key[HMAC_SHA512_LEN];
-    const uint8_t* p_master_blinding_key = NULL;
-    size_t master_blinding_key_len = 0;
+    uint32_t path[MAX_PATH_LEN];
+    size_t path_len = 0;
+    const size_t max_path_len = sizeof(path) / sizeof(path[0]);
 
-if (rpc_has_field_data("derive_child", &params) {
+    script_variant_t script_variant;
+
+    struct ext_key derived;
+
+if (rpc_has_field_data("derive_child", &params)) {
             rpc_get_bip32_path("path", &params, path, max_path_len, &path_len);
             if (path_len == 0) {
                 jade_process_reject_message(
                     process, CBOR_RPC_BAD_PARAMETERS, "Failed to extract valid path from parameters", NULL);
-                goto cleanup;
+                return;
             }
 
             // If paths not as expected show a warning message with the address
@@ -60,34 +58,24 @@ if (rpc_has_field_data("derive_child", &params) {
                 if (!wallet_bip32_path_as_str(path, path_len, path_str, sizeof(path_str))) {
                     jade_process_reject_message(
                         process, CBOR_RPC_INTERNAL_ERROR, "Failed to convert path to string format", NULL);
-                    goto cleanup;
+                    return;
                 }
                 const char* path_desc = is_change ? "Note:\nChange path" : "Warning:\nUnusual path";
                 const int ret = snprintf(warning_msg, sizeof(warning_msg), "%s\n%s", path_desc, path_str);
                 JADE_ASSERT(ret > 0 && ret < sizeof(warning_msg));
             }
 
-            // Build a script pubkey for the passed parameters
-            struct ext_key derived;
+
             if (!wallet_get_hdkey(path, path_len, BIP32_FLAG_KEY_PRIVATE, &derived)) {
                 jade_process_reject_message(
                     process, CBOR_RPC_BAD_PARAMETERS, "Failed to generate valid singlesig script", NULL);
-                goto cleanup;
+                return;
             }
         } else {
             // Multisig handled above, so should be nothing left
             jade_process_reject_message(process, CBOR_RPC_BAD_PARAMETERS, "Unhandled script variant", NULL);
-            goto cleanup;
+            return;
         }
-    }
-
-    // Display to the user to confirm
-    const bool default_selection = false;
-    if (!show_confirm_address_activity(address, default_selection)) {
-        JADE_LOGW("User declined to confirm address");
-        jade_process_reject_message(process, CBOR_RPC_USER_CANCELLED, "User declined to confirm address", NULL);
-        goto cleanup;
-    }
 
     JADE_LOGD("User pressed accept");
 
@@ -100,7 +88,4 @@ if (rpc_has_field_data("derive_child", &params) {
     jade_process_reply_to_message_result(process->ctx, derived.priv_key, cbor_result_string_cb);
 
     JADE_LOGI("Success");
-
-cleanup:
-    return;
 }
