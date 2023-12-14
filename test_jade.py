@@ -3127,6 +3127,20 @@ def test_totp(jadeapi):
             assert rslt == expected[i]
 
 
+def test_derive_child(jadeapi):
+    # Define the parameters for the derive_child call
+    variant = "pkh(k)"
+    path = [44, 0, 0, 0, 0]  # Example BIP32 path for the first address in a Bitcoin mainnet wallet
+
+    # Call the derive_child method
+    result = jadeapi.derive_child(variant, path)
+
+    # Assert the expected results
+    # Here you should replace 'expected_result' with the expected result of the derive_child call
+    expected_result = "your_expected_result"
+    assert result == expected_result, f"Expected {expected_result}, but got {result}"
+
+
 # NOTE:
 # There is some uncertainty around secrets padding when shorter than the hash size.
 # rfc6238 test vectors appear to suggest the secrets should be lengthened by repetition to the

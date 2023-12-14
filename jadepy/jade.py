@@ -1060,6 +1060,28 @@ class JadeAPI:
 
         return self._jadeRpc('get_receive_address', params)
 
+
+    def derive_child(self, variant, path):
+        """
+        RPC call to derive a child key from a given BIP32 path.
+
+        Parameters
+        ----------
+        variant: str
+            The script type - one of 'pkh(k)', 'wpkh(k)', 'sh(wpkh(k))'
+
+        path : list
+            The BIP32 path for the key derivation.
+
+        Returns
+        -------
+        dict
+            The reply from the rpc call.
+        """
+        params = {'variant': variant, 'path': path}
+        return self._jadeRpc('derive_child', params)
+
+
     def sign_message(self, path, message, use_ae_signatures=False,
                      ae_host_commitment=None, ae_host_entropy=None):
         """
