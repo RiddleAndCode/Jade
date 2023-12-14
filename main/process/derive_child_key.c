@@ -39,7 +39,7 @@ void get_child_key_process(void* process_ptr)
 {
     JADE_LOGI("Starting: %d", xPortGetFreeHeapSize());
     // Explicitly cast the void* to jade_process_t*
-    jade_process_t* process = static_cast<jade_process_t*>(process_ptr);
+     jade_process_t* process = process_ptr;
 
     char network[MAX_NETWORK_NAME_LEN];
 
