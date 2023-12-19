@@ -15,6 +15,7 @@
 
 #include <esp_event.h>
 #include <wally_script.h>
+#include "wally_bip32.h"
 
 #include "process_utils.h"
 
@@ -35,11 +36,11 @@
  *
  * If any error occurs during the process, it goes to cleanup and returns.
  */
-void get_child_key_process(void* process_ptr)
+void derive_child_key_process(void* process_ptr)
 {
     JADE_LOGI("Starting: %d", xPortGetFreeHeapSize());
     // Explicitly cast the void* to jade_process_t*
-     jade_process_t* process = process_ptr;
+    jade_process_t* process = process_ptr;
 
     char network[MAX_NETWORK_NAME_LEN];
 
@@ -48,7 +49,7 @@ void get_child_key_process(void* process_ptr)
     ASSERT_KEYCHAIN_UNLOCKED_BY_MESSAGE_SOURCE(process);
 
     // Declare variables before the GET_MSG_PARAMS macro
-    char warning_msg[128] = {'\0'};
+    char warning_msg[128] = { '\0' };
     uint32_t path[MAX_PATH_LEN];
     size_t path_len = 0;
     const size_t max_path_len = sizeof(path) / sizeof(path[0]);
@@ -56,54 +57,30 @@ void get_child_key_process(void* process_ptr)
     script_variant_t script_variant;
     size_t written = 0;
     struct ext_key derived;
+    char *xprv = NULL;
 
     // Now call the macro
     GET_MSG_PARAMS(process);
 
-if (rpc_has_field_data("derive_child", &params)) {
+    rpc_get_bip32_path("path", &params, path, max_path_len, &path_len);
+    if (path_len == 0) {
+        jade_process_reject_message(
+            process, CBOR_RPC_BAD_PARAMETERS, "Failed to extract valid path from parameters", NULL);
+        goto cleanup;
+    }
 
-        	rpc_get_string("variant", sizeof(variant), &params, variant, &written);
-        	if (!get_script_variant(variant, written, &script_variant)) {
-            	jade_process_reject_message(process, CBOR_RPC_BAD_PARAMETERS, "Invalid script variant parameter", NULL);
-            	goto cleanup;
-        	}
-
-            rpc_get_bip32_path("path", &params, path, max_path_len, &path_len);
-            if (path_len == 0) {
-                jade_process_reject_message(
-                    process, CBOR_RPC_BAD_PARAMETERS, "Failed to extract valid path from parameters", NULL);
-                 goto cleanup;
-            }
-
-            // If paths not as expected show a warning message with the address
-            bool is_change = false;
-            if (!wallet_is_expected_singlesig_path(network, script_variant, is_change, path, path_len)) {
-                is_change = wallet_is_expected_singlesig_path(network, script_variant, true, path, path_len);
-
-                char path_str[MAX_PATH_STR_LEN(MAX_PATH_LEN)];
-                if (!wallet_bip32_path_as_str(path, path_len, path_str, sizeof(path_str))) {
-                    jade_process_reject_message(
-                        process, CBOR_RPC_INTERNAL_ERROR, "Failed to convert path to string format", NULL);
-                     goto cleanup;
-                }
-                const char* path_desc = is_change ? "Note:\nChange path" : "Warning:\nUnusual path";
-                const int ret = snprintf(warning_msg, sizeof(warning_msg), "%s\n%s", path_desc, path_str);
-                JADE_ASSERT(ret > 0 && ret < sizeof(warning_msg));
-            }
-
-
-            if (!wallet_get_hdkey(path, path_len, BIP32_FLAG_KEY_PRIVATE, &derived)) {
-                jade_process_reject_message(
-                    process, CBOR_RPC_BAD_PARAMETERS, "Failed to generate valid singlesig script", NULL);
-                 goto cleanup;
-            }
-        } else {
-            // Multisig handled above, so should be nothing left
-            jade_process_reject_message(process, CBOR_RPC_BAD_PARAMETERS, "Unhandled script variant", NULL);
-             goto cleanup;
-        }
+    if (!wallet_get_hdkey(path, path_len, BIP32_FLAG_KEY_PRIVATE, &derived)) {
+        jade_process_reject_message(
+            process, CBOR_RPC_BAD_PARAMETERS, "Failed to generate valid singlesig script", NULL);
+        goto cleanup;
+    }
 
     JADE_LOGD("User pressed accept");
+
+    if (!bip32_key_to_base58(&derived, BIP32_FLAG_KEY_PRIVATE, &xprv)) {
+        jade_process_reject_message(process, CBOR_RPC_INTERNAL_ERROR, "Failed to convert key to base58", NULL);
+        goto cleanup;
+    }
 
     // Show warning if necessary
     if (warning_msg[0] != '\0') {
@@ -111,10 +88,10 @@ if (rpc_has_field_data("derive_child", &params)) {
     }
 
     // Reply with the address
-    jade_process_reply_to_message_result(process->ctx, derived.priv_key, cbor_result_string_cb);
+    jade_process_reply_to_message_result(process->ctx, xprv, cbor_result_string_cb);
 
     JADE_LOGI("Success");
 
 cleanup:
-     return;
+    return;
 }
