@@ -3142,7 +3142,7 @@ ZoxpDgc3UZwmpCgfdCkNmcSQa2tjnZLPohvRFECZP9P1boFKdJ5Sx'
 
     # Assert the expected results
     # Here you should replace 'expected_result' with the expected result of the derive_child call
-    expected_result = "your_expected_result"
+    expected_result = "xprvA44L8kPz4HawJVF1yRr1hEyySwxApcdJz1nkcyc6G1iUDEyRV6THqz6fr6AscWASx6iJ8fW5kz8d7TrCSGsY1H21v2C8PDfCx3aT4C1F6yM"
     logger.info('results', result)
     assert result == expected_result, f"Expected {expected_result}, but got {result}"
 
@@ -3289,32 +3289,32 @@ def run_api_tests(jadeapi, isble, qemu, authuser=False):
     test_bip85_bip39_encrypted_entropy(jadeapi)
 
     # Test generic multisig
-    # test_generic_multisig_registration(jadeapi)
-    # test_generic_multisig_matches_ga_addresses(jadeapi)
-    # test_generic_multisig_matches_ga_signatures(jadeapi)
-    # test_generic_multisig_matches_ga_signatures_liquid(jadeapi)
-    # test_generic_multisig_files(jadeapi)
+    test_generic_multisig_registration(jadeapi)
+    test_generic_multisig_matches_ga_addresses(jadeapi)
+    test_generic_multisig_matches_ga_signatures(jadeapi)
+    test_generic_multisig_matches_ga_signatures_liquid(jadeapi)
+    test_generic_multisig_files(jadeapi)
 
     # Test descriptor wallets
-    # test_miniscript_descriptor_registration(jadeapi)
+    test_miniscript_descriptor_registration(jadeapi)
 
     # Get (receive) green-addresses, get-xpub, and sign-message
     test_get_greenaddress_receive_address(jadeapi)
     test_get_xpubs(jadeapi)
-    # test_sign_message(jadeapi)
-    # test_sign_message_file(jadeapi)
+    test_sign_message(jadeapi)
+    test_sign_message_file(jadeapi)
 
     # Sign Tx - includes some failure cases
-    # test_sign_tx(jadeapi, SIGN_TXN_TESTS)
-    # test_sign_tx_error_cases(jadeapi, SIGN_TXN_FAIL_CASES)
+    test_sign_tx(jadeapi, SIGN_TXN_TESTS)
+    test_sign_tx_error_cases(jadeapi, SIGN_TXN_FAIL_CASES)
 
     # Test liuid blinding keys/nonce, blinded commitments and sign-tx
     test_liquid_blinding_keys(jadeapi)
-    # test_liquid_blinded_commitments(jadeapi)
-    # test_sign_liquid_tx(jadeapi, has_psram, has_ble, SIGN_LIQUID_TXN_TESTS)
+    test_liquid_blinded_commitments(jadeapi)
+    test_sign_liquid_tx(jadeapi, has_psram, has_ble, SIGN_LIQUID_TXN_TESTS)
 
     # Test sign psbts (app-generated cases)
-    # test_sign_psbt(jadeapi, SIGN_PSBT_TESTS)
+    test_sign_psbt(jadeapi, SIGN_PSBT_TESTS)
 
     # Short sanity-test of 12-word mnemonic
     test_12word_mnemonic(jadeapi)
@@ -3327,19 +3327,19 @@ def run_api_tests(jadeapi, isble, qemu, authuser=False):
     # Test the generic multisigs again, using a second signer
     # NOTE: some of these tests assume 'test_generic_multisig_registration()' test
     # has already been run, to register the multisigs for the test mnemonic signer
-    # test_generic_multisig_ss_signer(jadeapi)
+    test_generic_multisig_ss_signer(jadeapi)
 
     # Test the descriptor wallets again, using a second signer
     # NOTE: some of these tests assume 'test_miniscript_descriptor_registration()' test
     # has already been run, to register the descriptors for the test mnemonic signer
-    # test_miniscript_descriptor_registration_ss_signer(jadeapi)
+    test_miniscript_descriptor_registration_ss_signer(jadeapi)
 
     test_get_singlesig_receive_address(jadeapi)
-    # test_sign_tx(jadeapi, SIGN_TXN_SINGLE_SIG_TESTS)
-    # test_sign_liquid_tx(jadeapi, has_psram, has_ble, SIGN_LIQUID_TXN_SINGLE_SIG_TESTS)
+    test_sign_tx(jadeapi, SIGN_TXN_SINGLE_SIG_TESTS)
+    test_sign_liquid_tx(jadeapi, has_psram, has_ble, SIGN_LIQUID_TXN_SINGLE_SIG_TESTS)
 
     # Test sign psbts (HWI-generated cases)
-    # test_sign_psbt(jadeapi, SIGN_PSBT_SS_TESTS)
+    test_sign_psbt(jadeapi, SIGN_PSBT_SS_TESTS)
 
     # Sign identity (ssh & gpg) tests require a specific mnemonic
     rslt = jadeapi.set_mnemonic(TEST_MNEMONIC_12_IDENTITY)
@@ -3349,9 +3349,9 @@ def run_api_tests(jadeapi, isble, qemu, authuser=False):
 
     # Test OTP (hotp and totp)
     # (These don't depend on the wallet/mnemonic, just that the hw is unlocked)
-    # test_hotp(jadeapi)
-    # test_totp(jadeapi)
-    # test_totp_ex(jadeapi)
+    test_hotp(jadeapi)
+    test_totp(jadeapi)
+    test_totp_ex(jadeapi)
     test_derive_child(jadeapi)
 
     # restore the mnemonic
@@ -3463,8 +3463,8 @@ def run_jade_tests(jadeapi, args, isble):
     logger.info(f"Running selected Jade tests over passed connection, is_ble={isble}")
 
     # Low-level JadeInterface tests
-    # if not args.skiplow:
-    #     run_interface_tests(jadeapi, isble, args.qemu, authuser=args.authuser)
+    if not args.skiplow:
+        run_interface_tests(jadeapi, isble, args.qemu, authuser=args.authuser)
 
     # High-level JadeAPI tests
     if not args.skiphigh:

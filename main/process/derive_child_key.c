@@ -76,9 +76,9 @@ void derive_child_key_process(void* process_ptr)
     }
 
     JADE_LOGD("User pressed accept");
-
-    if (!bip32_key_to_base58(&derived, BIP32_FLAG_KEY_PRIVATE, &xprv)) {
-        jade_process_reject_message(process, CBOR_RPC_INTERNAL_ERROR, "Failed to convert key to base58", NULL);
+    int val = bip32_key_to_base58(&derived, BIP32_FLAG_KEY_PRIVATE, &xprv);
+    if (val != WALLY_OK) {
+                jade_process_reject_message(process, CBOR_RPC_INTERNAL_ERROR, "Failed to convert key to base58", NULL);
         goto cleanup;
     }
 
